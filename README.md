@@ -35,6 +35,9 @@ python ThresholdFunction.py
 # Experiment on threshold function problem:
 python Iris.py
 
+# Experiment on Boolean connection problem with small sample size:
+python BooleanConjunctions_small.py
+
 # Analysis of P_m and Q_m with different sample sizes (Figures 3 and 8 in the paper):
 python DataAnalysis.py
 

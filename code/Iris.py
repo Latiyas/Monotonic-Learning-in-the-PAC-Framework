@@ -17,7 +17,7 @@ def load_iris_train_test(ratio=0.8, types=[1, 2]):
             instances.append(x)
             labels.append(y)
 
-    test_num = int(len(instances) - len(instances) * 0.8)
+    test_num = int(len(instances) - len(instances) * ratio)
 
     X_train, X_test, y_train, y_test = train_test_split(instances, labels, test_size=test_num, random_state=53, stratify=labels)
 
@@ -165,7 +165,7 @@ if __name__ == '__main__':
     L_min = calculate_min_loss(testsets_x, testsets_y)
 
     # number of repeated samples
-    num_repeat = 100
+    num_repeat = 1000
     # number of intervals
     num_span = 100
     # minimal sample size

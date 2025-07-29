@@ -28,7 +28,7 @@ def compare_density(data_name, data1, data2, num_sample, font_size=32):
     plt.tick_params(axis='both', which='major', labelsize=font_size)
 
     # save picture
-    plt.savefig('../prediction_result/{}Sample{}.png'.format(data_name, num_sample), dpi=100)
+    plt.savefig('../prediction_result/{}Sample{}.png'.format(data_name, num_sample), dpi=300)
     plt.close()
 
 
@@ -69,7 +69,7 @@ def compare_distribution(data_name, data1, data2, name, span=10, y_scale=[-0.01,
     plt.legend(loc='upper right', fontsize=font_size)
 
     # save picture
-    plt.savefig('../prediction_result/{}_compare_{}.png'.format(data_name, name), dpi=100)
+    plt.savefig('../prediction_result/{}_compare_{}.png'.format(data_name, name), dpi=300)
     plt.close()
 
 
@@ -90,8 +90,19 @@ def compare_wasserstein(data_name, data, span=10, font_size=32):
     plt.yticks(fontsize=font_size)
     plt.legend(loc='upper right', fontsize=font_size)
 
+    for i in [1, 2, 5, 10, 20, 50]:
+        idx = i - 1
+        plt.annotate(
+            f"epoch: {x_list[idx]} \nWD: {y[idx]:.3f}",  # 显示内容
+            xy=(x_list[idx], y[idx]),  # 点的位置
+            xytext=(x_list[idx] + 0.1, y[idx] + 0.1),  # 注释文字的位置
+            arrowprops=dict(arrowstyle='->', color='red'),  # 箭头样式
+            fontsize=24,
+            bbox=dict(boxstyle='round,pad=0.3', fc='lightyellow', ec='gray', lw=1)
+        )
+
     # save picture
-    plt.savefig('../prediction_result/{}_WD.png'.format(data_name), dpi=100)
+    plt.savefig('../prediction_result/{}_WD.png'.format(data_name), dpi=300)
     plt.close()
 
 
@@ -157,9 +168,13 @@ if __name__ == '__main__':
     TH.analyze_statistic()
     TH.analyze_wasserstein()
 
-    Iris = Dataset('Iris', num_mini_sample=200, num_round=50, num_repeat=100, num_span=100)
+    Iris = Dataset('Iris', num_mini_sample=200, num_round=50, num_repeat=1000, num_span=100)
     Iris.analyze_dis([1, 2, 5, 10, 25, 50])
     Iris.analyze_statistic()
     Iris.analyze_wasserstein()
 
+    CBL = Dataset('CBL(small_sample)', num_mini_sample=5, num_round=50, num_repeat=100, num_span=100)
+    CBL.analyze_dis([1, 2, 5, 10, 20, 50])
+    CBL.analyze_statistic()
+    CBL.analyze_wasserstein()
     print('end')

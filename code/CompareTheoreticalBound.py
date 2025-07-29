@@ -81,7 +81,7 @@ def compare_distribution(data_name, data1, data2, name, span=10, y_scale=[-0.01,
     plt.legend(loc='upper right', fontsize=font_size)
 
     # save picture
-    plt.savefig('../prediction_result/{}_compare_{}_CTB.png'.format(data_name, name), dpi=100)
+    plt.savefig('../prediction_result/{}_compare_{}_CTB.png'.format(data_name, name), dpi=300)
     plt.close()
 
 
@@ -103,7 +103,7 @@ def compare_wasserstein(data_name, data, span=10, font_size=32):
     plt.legend(loc='upper right', fontsize=font_size)
 
     # save picture
-    plt.savefig('../prediction_result/{}_WD_CTB.png'.format(data_name), dpi=100)
+    plt.savefig('../prediction_result/{}_WD_CTB.png'.format(data_name), dpi=300)
     plt.close()
 
 

@@ -62,9 +62,9 @@ class Dataset:
 if __name__ == '__main__':
     print('start')
 
-    CBL = Dataset('CBL', num_mini_sample=25, num_round=50, num_repeat=1000, num_span=100)
+    CBL = Dataset('CBL', num_mini_sample=5, num_round=50, num_repeat=100, num_span=100)
 
-    files = utils.find_files(CBL.path, '1({},{},{},{})'.format(CBL.num_repeat, CBL.num_span, CBL.num_mini_sample, CBL.num_round))
+    files = utils.find_files(CBL.path, '({},{},{},{})'.format(CBL.num_repeat, CBL.num_span, CBL.num_mini_sample, CBL.num_round))
     if len(files) > 0:
         CBL_name = files[0]
     else:
