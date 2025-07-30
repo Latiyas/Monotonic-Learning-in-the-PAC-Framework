@@ -1,7 +1,47 @@
 import os, math, random, time, utils
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats
+import argparse
+
+
+### parsing and configuration
+def parse_args():
+    desc = "Monotonicity analysis on the Boolean literal conjunction learning problem"
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('--num_repeat', type=int, default=1000, help='The number of repeated sampling')
+    parser.add_argument('--num_span', type=int, default=100, help='The number of intervals')
+    parser.add_argument('--num_mini_sample', type=int, default=25, help='The minimum sample size')
+    parser.add_argument('--num_iter', type=int, default=50, help='The number of iterations')
+
+    return check_args(parser.parse_args())
+
+
+### checking arguments
+def check_args(args):
+    # num_repeat
+    try:
+        assert args.num_repeat >= 1
+    except:
+        print('The number of repeated samplings should be no less than 1')
+
+    # num_span
+    try:
+        assert args.num_span >= 1
+    except:
+        print('The number of intervals should be no less than 1')
+
+    # num_mini_sample
+    try:
+        assert args.num_mini_sample >= 1
+    except:
+        print('The minimum sample size should be no less than 1')
+
+    # num_iter
+    try:
+        assert args.num_iter >= 1
+    except:
+        print('The number of iterations should be no less than 1')
+
+    return args
 
 
 ### calculate the frequency of monotonic updatas
@@ -32,10 +72,10 @@ def calculate_mean_std(data, num_span):
 
 
 class Dataset:
-    def __init__(self, data_name, num_mini_sample, num_round=50, num_repeat=100, num_span=100):
+    def __init__(self, data_name, num_mini_sample, num_iter=50, num_repeat=100, num_span=100):
         self.data_name = data_name
         self.num_mini_sample = num_mini_sample
-        self.num_round = num_round
+        self.num_iter = num_iter
         self.num_repeat = num_repeat
         self.num_span = num_span
         self.path = '../user_data/tmp_data/'
@@ -59,12 +99,18 @@ class Dataset:
         print('monotone: {}'.format(fre_mono))
 
 
-if __name__ == '__main__':
-    print('start')
+### main
+def main():
+    # parse arguments
+    args = parse_args()
+    if args is None:
+        exit()
 
-    CBL = Dataset('CBL', num_mini_sample=5, num_round=50, num_repeat=100, num_span=100)
+    CBL = Dataset('CBL', num_mini_sample=args.num_mini_sample, num_iter=args.num_iter, num_repeat=args.num_repeat,
+                  num_span=args.num_span)
 
-    files = utils.find_files(CBL.path, '({},{},{},{})'.format(CBL.num_repeat, CBL.num_span, CBL.num_mini_sample, CBL.num_round))
+    files = utils.find_files(CBL.path,
+                             '({},{},{},{})'.format(CBL.num_repeat, CBL.num_span, CBL.num_mini_sample, CBL.num_iter))
     if len(files) > 0:
         CBL_name = files[0]
     else:
@@ -72,5 +118,12 @@ if __name__ == '__main__':
         exit()
 
     CBL.analyze_monotone(CBL_name)
+
+
+if __name__ == '__main__':
+    print('start')
+
+    # execute main function
+    main()
 
     print('end')

@@ -2,6 +2,61 @@ import os, math, random, time, utils
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
+import argparse
+
+
+### parsing and configuration
+def parse_args():
+    desc = "Monotonicity analysis on the Boolean literal conjunction learning problem"
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('--data_type', type=str, default='CBL', choices=['CBL', 'TH', 'Iris'],
+                        help='The type of data set')
+    parser.add_argument('--num_repeat', type=int, default=1000, help='The number of repeated sampling')
+    parser.add_argument('--num_span', type=int, default=100, help='The number of intervals')
+    parser.add_argument('--num_mini_sample', type=int, default=25, help='The minimum sample size')
+    parser.add_argument('--num_iter', type=int, default=50, help='The number of iterations')
+    parser.add_argument('--display_steps', type=int, nargs='*', default=[1, 2, 5, 10, 20, 50],
+                        help='The step size to be displayed')
+    parser.add_argument('--extra_name', type=str, default='', help='The additional information')
+
+    return check_args(parser.parse_args())
+
+
+### checking arguments
+def check_args(args):
+    # num_repeat
+    try:
+        assert args.num_repeat >= 1
+    except:
+        print('The number of repeated samplings should be no less than 1')
+
+    # num_span
+    try:
+        assert args.num_span >= 1
+    except:
+        print('The number of intervals should be no less than 1')
+
+    # num_mini_sample
+    try:
+        assert args.num_mini_sample >= 1
+    except:
+        print('The minimum sample size should be no less than 1')
+
+    # num_iter
+    try:
+        assert args.num_iter >= 1
+    except:
+        print('The number of iterations should be no less than 1')
+
+    # display_steps
+    try:
+        for i in args.display_steps:
+            assert i >= 1 and i <= args.num_iter
+    except:
+        print('This is an incorrect display point')
+
+    return args
 
 
 ### compare the probability density using a bar chart
@@ -107,16 +162,20 @@ def compare_wasserstein(data_name, data, span=10, font_size=32):
 
 
 class Dataset:
-    def __init__(self, data_name, num_mini_sample, num_round=50, num_repeat=100, num_span=100):
+    def __init__(self, data_name, num_mini_sample, num_iter=50, num_repeat=100, num_span=100, extra_name=''):
         self.data_name = data_name
         self.num_mini_sample = num_mini_sample
-        self.num_round = num_round
+        self.num_iter = num_iter
         self.num_repeat = num_repeat
         self.num_span = num_span
         self.path = '../user_data/tmp_data/'
+        if extra_name != '':
+            self.output_name = '{}({})'.format(self.data_name, extra_name)
+        else:
+            self.output_name = self.data_name
 
         # find the corresponding distribution
-        self.sub_name = '({},{},{},{})'.format(self.num_repeat, self.num_span, self.num_mini_sample, self.num_round)
+        self.sub_name = '({},{},{},{})'.format(self.num_repeat, self.num_span, self.num_mini_sample, self.num_iter)
         self.P = self.search_file('{}_P{}'.format(self.data_name, self.sub_name))
         self.Q = self.search_file('{}_Q{}'.format(self.data_name, self.sub_name))
 
@@ -135,14 +194,14 @@ class Dataset:
         for i in list:
             data1 = self.P[i - 1]
             data2 = self.Q[i - 1]
-            compare_density(self.data_name, data1, data2, i * self.num_mini_sample)
+            compare_density(self.output_name, data1, data2, i * self.num_mini_sample)
 
     ### analyze mean/standard deviation of the distributions
     def analyze_statistic(self):
         P_mean, P_std = calculate_mean_std(self.P, self.num_span)
         Q_mean, Q_std = calculate_mean_std(self.Q, self.num_span)
-        compare_distribution(self.data_name, P_mean, Q_mean, 'mean', span=10, y_scale=[-0.01, 1.01])
-        compare_distribution(self.data_name, P_std, Q_std, 'std', span=10, y_scale=[-0.001, 0.055])
+        compare_distribution(self.output_name, P_mean, Q_mean, 'mean', span=10, y_scale=[-0.01, 1.01])
+        compare_distribution(self.output_name, P_std, Q_std, 'std', span=10, y_scale=[-0.001, 0.055])
 
     ### analyze the wasserstein distance
     def analyze_wasserstein(self):
@@ -152,29 +211,27 @@ class Dataset:
             wd = scipy.stats.wasserstein_distance(dists, dists, np.array(self.P[i]), np.array(self.Q[i]))
             WD.append(wd)
 
-        compare_wasserstein(self.data_name, WD, span=10)
+        compare_wasserstein(self.output_name, WD, span=10)
+
+
+### main
+def main():
+    # parse arguments
+    args = parse_args()
+    if args is None:
+        exit()
+
+    analysis_model = Dataset(args.data_type, num_mini_sample=args.num_mini_sample, num_iter=args.num_iter,
+                             num_repeat=args.num_repeat, num_span=args.num_span, extra_name=args.extra_name)
+    analysis_model.analyze_dis(args.display_steps)
+    analysis_model.analyze_statistic()
+    analysis_model.analyze_wasserstein()
 
 
 if __name__ == '__main__':
     print('start')
 
-    CBL = Dataset('CBL', num_mini_sample=25, num_round=50, num_repeat=1000, num_span=100)
-    CBL.analyze_dis([1, 2, 5, 10, 20, 50])
-    CBL.analyze_statistic()
-    CBL.analyze_wasserstein()
+    # execute main function
+    main()
 
-    TH = Dataset('TH', num_mini_sample=200, num_round=50, num_repeat=1000, num_span=100)
-    TH.analyze_dis([1, 2, 5, 10, 25, 50])
-    TH.analyze_statistic()
-    TH.analyze_wasserstein()
-
-    Iris = Dataset('Iris', num_mini_sample=200, num_round=50, num_repeat=1000, num_span=100)
-    Iris.analyze_dis([1, 2, 5, 10, 25, 50])
-    Iris.analyze_statistic()
-    Iris.analyze_wasserstein()
-
-    CBL = Dataset('CBL(small_sample)', num_mini_sample=5, num_round=50, num_repeat=100, num_span=100)
-    CBL.analyze_dis([1, 2, 5, 10, 20, 50])
-    CBL.analyze_statistic()
-    CBL.analyze_wasserstein()
     print('end')

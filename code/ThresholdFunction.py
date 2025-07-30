@@ -1,5 +1,77 @@
 import os, math, random, time, utils
 import numpy as np
+import argparse
+
+
+### parsing and configuration
+def parse_args():
+    desc = "Monotonicity analysis on the threshold function learning problem"
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('--num_scope', type=float, default=1, help='The scope of sampling')
+    parser.add_argument('--goal', type=float, default=0.53, help='The ground truth of the threshold function')
+    parser.add_argument('--num_repeat', type=int, default=1000, help='The number of repeated samplings')
+    parser.add_argument('--num_span', type=int, default=100, help='The number of intervals')
+    parser.add_argument('--num_mini_sample', type=int, default=200, help='The minimum sample size')
+    parser.add_argument('--num_iter', type=int, default=50, help='The number of iterations')
+    parser.add_argument('--tmp_dir', type=str, default='../user_data/tmp_data/',
+                        help='Directory name to save temp file')
+
+    return check_args(parser.parse_args())
+
+
+### checking arguments
+def check_args(args):
+    # num_scope
+    try:
+        assert args.num_scope > 0
+    except:
+        print('The scope of sampling should be greater than 0')
+
+    # goal
+    try:
+        assert args.goal >= 0 and args.goal <= args.num_scope
+    except:
+        print('The length of ground truth should be  between 0 and the scope of sampling')
+
+    # num_repeat
+    try:
+        assert args.num_repeat >= 1
+    except:
+        print('The number of repeated samplings should be no less than 1')
+
+    # num_span
+    try:
+        assert args.num_span >= 1
+    except:
+        print('The number of intervals should be no less than 1')
+
+    # num_mini_sample
+    try:
+        assert args.num_mini_sample >= 1
+    except:
+        print('The minimum sample size should be no less than 1')
+
+    # num_iter
+    try:
+        assert args.num_iter >= 1
+    except:
+        print('The number of iterations should be no less than 1')
+
+    # tmp_dir
+    if not os.path.exists(args.tmp_dir):
+        os.makedirs(args.tmp_dir)
+
+    return args
+
+
+### outputting config
+def output_config(args):
+    print('The ground truth: {}'.format(args.goal))
+    print('The number of repeated samplings:{}'.format(args.num_repeat))
+    print('The number of intervals:{}'.format(args.num_span))
+    print('The minimum sample size:{}'.format(args.num_mini_sample))
+    print('The number of iterations:{}'.format(args.num_iter))
 
 
 ### marking the instance
@@ -82,7 +154,7 @@ def GetTPDF(num_sample, num_span, num_VC=1):
     for i in range(num_span - 1):
         x = (i + 1.0) / num_span
         if x >= th:
-            tmp = 1 - 4 * H * math.exp(-1 * num_sample * (x**2) / 32)
+            tmp = 1 - 4 * H * math.exp(-1 * num_sample * (x ** 2) / 32)
             q[i] = tmp - pro_sum
             pro_sum = tmp
     q[num_span - 1] = 1 - pro_sum
@@ -103,43 +175,39 @@ def compare_distribution(goal, num_scope, num_sample, num_repeat, num_span):
     return p, q
 
 
-if __name__ == '__main__':
-    print('start')
+### main
+def main():
+    # parse arguments
+    args = parse_args()
+    if args is None:
+        exit()
 
-    T1 = time.time()
+    output_config(args)
 
-    # assuming the problem is between 0 and 1
-    num_scope = 1
-
-    # generate a target threshold (assumed to be a decimal number between 0 and 1), the distribution is homogeneous
-    # example
-    # goal = generate_instance(num_scope)
-    goal = 0.53
-    # print(goal)
-
-    # number of repeated samples
-    num_repeat = 1000
-    # number of intervals
-    num_span = 100
-    # minimal sample size
-    num_mini_sample = 200
-    # number of iterations
-    num_round = 50
     P_list = []
     Q_list = []
-    for i in range(num_round):
-        num_sample = num_mini_sample * (i + 1)
-        p, q = compare_distribution(goal, num_scope, num_sample, num_repeat, num_span)
+    for i in range(args.num_iter):
+        num_sample = args.num_mini_sample * (i + 1)
+        p, q = compare_distribution(args.goal, args.num_scope, num_sample, args.num_repeat, args.num_span)
         P_list.append(p)
         Q_list.append(q)
 
-    path = '../user_data/tmp_data/'
-    paras = '({},{},{},{})'.format(num_repeat, num_span, num_mini_sample, num_round)
+    path = args.tmp_dir
+    paras = '({},{},{},{})'.format(args.num_repeat, args.num_span, args.num_mini_sample, args.num_iter)
 
     localtime = time.localtime(time.time())
-    timestamp = "{:0>2d}{:0>2d}_{:0>2d}{:0>2d}".format(localtime.tm_mon, localtime.tm_mday, localtime.tm_hour, localtime.tm_min)
+    timestamp = "{:0>2d}{:0>2d}_{:0>2d}{:0>2d}".format(localtime.tm_mon, localtime.tm_mday, localtime.tm_hour,
+                                                       localtime.tm_min)
     utils.save_file(P_list, path + 'TH_P{}({}).pkl'.format(paras, timestamp))
     utils.save_file(Q_list, path + 'TH_Q{}({}).pkl'.format(paras, timestamp))
+
+
+if __name__ == '__main__':
+    print('start')
+    T1 = time.time()
+
+    # execute main function
+    main()
 
     T2 = time.time()
     print('The runtime: %s ms' % ((T2 - T1) * 1000))
